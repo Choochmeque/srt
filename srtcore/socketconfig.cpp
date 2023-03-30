@@ -704,6 +704,27 @@ struct CSrtConfigSetter<SRTO_TRANSTYPE>
             co.sCongestion.set("file", 4);
             break;
 
+        case SRTT_UDPBLAST:
+            // File transfer mode:
+            // - tsbpd: off
+            // - latency: 0
+            // - linger: on
+            // - congctl: udp blast
+            // - extraction method: stream (reading call extracts as many bytes as available and fits in buffer)
+            co.bTSBPD          = false;
+            co.iRcvLatency     = 0;
+            co.iPeerLatency    = 0;
+            co.bTLPktDrop      = false;
+            co.iSndDropDelay   = -1;
+            co.bMessageAPI     = false;
+            co.bRcvNakReport   = false;
+            co.iRetransmitAlgo = 0;
+            co.zExpPayloadSize = 0; // use maximum
+            co.Linger.l_onoff  = 1;
+            co.Linger.l_linger = CSrtConfig::DEF_LINGER_S;
+            co.sCongestion.set("blast", 5);
+            break;
+
         default:
             throw CUDTException(MJ_NOTSUP, MN_INVAL, 0);
         }

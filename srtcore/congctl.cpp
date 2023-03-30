@@ -613,6 +613,24 @@ private:
     }
 };
 
+class UDPBlast : public SrtCongestionControlBase
+{
+    typedef UDPBlast Me; // required for SSLOT macro
+
+public:
+    UDPBlast(CUDT* parent)
+        : SrtCongestionControlBase(parent)
+    {
+        m_dCWndSize = 83333.0;
+        m_dPktSndPeriod = (m_parent->MSS() * 8.0) / 125.0;
+    }
+
+private:
+    SrtCongestion::RexmitMethod rexmitMethod() ATR_OVERRIDE
+    {
+        return SrtCongestion::SRM_FASTREXMIT;
+    }
+};
 
 #undef SSLOT
 
@@ -625,7 +643,8 @@ struct Creator
 SrtCongestion::NamePtr SrtCongestion::congctls[N_CONTROLLERS] =
 {
     {"live", Creator<LiveCC>::Create },
-    {"file", Creator<FileCC>::Create }
+    {"file", Creator<FileCC>::Create },
+    {"blast", Creator<UDPBlast>::Create }
 };
 
 
