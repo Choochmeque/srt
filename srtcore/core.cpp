@@ -6023,6 +6023,59 @@ void srt::CUDT::addressAndSend(CPacket& w_pkt)
     m_pSndQueue->sendto(m_PeerAddr, w_pkt, m_SourceAddr);
 }
 
+bool srt::CUDT::flushInternal()
+{
+    if (!m_bOpened)
+    {
+        return false;
+    }
+
+    // IMPORTANT:
+    // This function may block indefinitely, if called for a socket
+    // that has m_bBroken == false or m_bConnected == true.
+    // If it is intended to forcefully close the socket, make sure
+    // that it's in response to a broken connection.
+    HLOGC(smlog.Debug, log << CONID() << "flushing socket");
+
+    if (m_config.Linger.l_onoff != 0)
+    {
+        const steady_clock::time_point entertime = steady_clock::now();
+
+        HLOGC(smlog.Debug, log << CONID() << "... (linger)");
+        while (!m_bBroken && m_bConnected && (m_pSndBuffer->getCurrBufSize() > 0) &&
+               (steady_clock::now() - entertime < seconds_from(m_config.Linger.l_linger)))
+        {
+            // linger has been checked by previous close() call and has expired
+            if (m_tsLingerExpiration >= entertime)
+                break;
+
+            if (!m_config.bSynSending)
+            {
+                // if this socket enables asynchronous sending, return immediately and let GC to close it later
+                if (is_zero(m_tsLingerExpiration))
+                    m_tsLingerExpiration = entertime + seconds_from(m_config.Linger.l_linger);
+
+                HLOGC(smlog.Debug,
+                      log << CONID() << "CUDT::flush: linger-nonblocking, setting expire time T="
+                          << FormatTime(m_tsLingerExpiration));
+
+                return false;
+            }
+
+#ifndef _WIN32
+            timespec ts;
+            ts.tv_sec  = 0;
+            ts.tv_nsec = 1000000;
+            nanosleep(&ts, NULL);
+#else
+            Sleep(1);
+#endif
+        }
+    }
+
+    return true;
+}
+
 // [[using maybe_locked(m_GlobControlLock, if called from GC)]]
 bool srt::CUDT::closeInternal()
 {

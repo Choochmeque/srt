@@ -205,6 +205,7 @@ public: //API
 #if ENABLE_BONDING
     static int connectLinks(SRTSOCKET grp, SRT_SOCKGROUPCONFIG links [], int arraysize);
 #endif
+    static int flush(SRTSOCKET u);
     static int close(SRTSOCKET u);
     static int getpeername(SRTSOCKET u, sockaddr* name, int* namelen);
     static int getsockname(SRTSOCKET u, sockaddr* name, int* namelen);
@@ -566,6 +567,8 @@ private:
     /// negotiated by acceptAndRespond.
     void rewriteHandshakeData(const sockaddr_any& peer, CHandShake& w_hs);
     bool runAcceptHook(CUDT* acore, const sockaddr* peer, const CHandShake& hs, const CPacket& hspkt);
+
+    bool flushInternal();
 
     /// Close the opened UDT entity.
 

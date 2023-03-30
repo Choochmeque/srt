@@ -177,6 +177,7 @@ SRT_API int bind2(SRTSOCKET u, UDPSOCKET udpsock);
 SRT_API int listen(SRTSOCKET u, int backlog);
 SRT_API SRTSOCKET accept(SRTSOCKET u, struct sockaddr* addr, int* addrlen);
 SRT_API int connect(SRTSOCKET u, const struct sockaddr* name, int namelen);
+SRT_API int flush(SRTSOCKET u);
 SRT_API int close(SRTSOCKET u);
 SRT_API int getpeername(SRTSOCKET u, struct sockaddr* name, int* namelen);
 SRT_API int getsockname(SRTSOCKET u, struct sockaddr* name, int* namelen);

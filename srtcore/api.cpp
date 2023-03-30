@@ -1895,6 +1895,15 @@ int srt::CUDTUnited::connectIn(CUDTSocket* s, const sockaddr_any& target_addr, i
     return 0;
 }
 
+int srt::CUDTUnited::flush(const SRTSOCKET u)
+{
+    CUDTSocket* s = locateSocket(u);
+    if (!s)
+        throw CUDTException(MJ_NOTSUP, MN_SIDINVAL, 0);
+
+    return s->core().flushInternal();
+}
+
 int srt::CUDTUnited::close(const SRTSOCKET u)
 {
 #if ENABLE_BONDING
@@ -3705,6 +3714,27 @@ int srt::CUDT::connect(SRTSOCKET u, const sockaddr* name, int namelen, int32_t f
     }
 }
 
+int srt::CUDT::flush(SRTSOCKET u)
+{
+    try
+    {
+        return uglobal().flush(u);
+    }
+    catch (const CUDTException& e)
+    {
+        return APIError(e);
+    }
+    catch (bad_alloc&)
+    {
+        return APIError(MJ_SYSTEMRES, MN_MEMORY, 0);
+    }
+    catch (const std::exception& ee)
+    {
+        LOGC(aclog.Fatal, log << "connect: UNEXPECTED EXCEPTION: " << typeid(ee).name() << ": " << ee.what());
+        return APIError(MJ_UNKNOWN, MN_NONE, 0);
+    }
+}
+
 int srt::CUDT::close(SRTSOCKET u)
 {
     try
@@ -4362,6 +4392,11 @@ SRTSOCKET accept(SRTSOCKET u, struct sockaddr* addr, int* addrlen)
 int connect(SRTSOCKET u, const struct sockaddr* name, int namelen)
 {
     return srt::CUDT::connect(u, name, namelen, SRT_SEQNO_NONE);
+}
+
+int flush(SRTSOCKET u)
+{
+    return srt::CUDT::flush(u);
 }
 
 int close(SRTSOCKET u)
